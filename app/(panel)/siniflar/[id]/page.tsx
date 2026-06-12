@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Plus, Users, ArrowRight, Pencil } from "lucide-react";
+import { Plus, Users, ArrowRight, FileSpreadsheet } from "lucide-react";
 import { useClass } from "@/hooks/use-classes";
 import { useStudents } from "@/hooks/use-students";
+import { useSubjects } from "@/hooks/use-subjects";
+import { ExcelImportModal } from "@/components/forms/excel-import-modal";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +23,9 @@ export default function ClassDetailPage() {
   const id = params.id as string;
   const { data: cls, isLoading } = useClass(id);
   const { data: students } = useStudents(id);
+  const { data: subjects } = useSubjects();
   const [modalOpen, setModalOpen] = useState(false);
+  const [excelOpen, setExcelOpen] = useState(false);
 
   if (isLoading) return <PageLoader />;
   if (!cls) return <EmptyState icon={Users} title="Sınıf bulunamadı" />;
@@ -33,9 +37,14 @@ export default function ClassDetailPage() {
         subtitle={`${cls.grade_level}. sınıf · ${cls.school_name ?? "Okul belirtilmedi"}`}
         back={{ href: "/siniflar", label: "Sınıflar" }}
         action={
-          <Button onClick={() => setModalOpen(true)}>
-            <Plus className="h-4 w-4" /> Öğrenci ekle
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => setExcelOpen(true)}>
+              <FileSpreadsheet className="h-4 w-4" /> Excel deneme
+            </Button>
+            <Button onClick={() => setModalOpen(true)}>
+              <Plus className="h-4 w-4" /> Öğrenci ekle
+            </Button>
+          </div>
         }
       />
 
@@ -79,6 +88,13 @@ export default function ClassDetailPage() {
         onClose={() => setModalOpen(false)}
         defaultClassId={id}
         defaultGrade={cls.grade_level}
+      />
+
+      <ExcelImportModal
+        open={excelOpen}
+        onClose={() => setExcelOpen(false)}
+        students={students ?? []}
+        subjects={subjects ?? []}
       />
     </div>
   );

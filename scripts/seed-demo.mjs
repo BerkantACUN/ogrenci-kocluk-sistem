@@ -110,17 +110,19 @@ async function main() {
     rd = 0,
     ex = 0;
 
-  for (const st of STUDENTS) {
+  for (let si = 0; si < STUDENTS.length; si++) {
+    const st = STUDENTS[si];
     const { rows: sRow } = await client.query(
       `insert into public.students
-        (class_id, teacher_id, first_name, last_name, grade_level, school_name, parent_name, parent_email, parent_phone, note)
-       values ($1,$2,$3,$4,8,$5,$6,$7,$8,$9) returning id`,
+        (class_id, teacher_id, first_name, last_name, grade_level, school_name, student_no, parent_name, parent_email, parent_phone, note)
+       values ($1,$2,$3,$4,8,$5,$6,$7,$8,$9,$10) returning id`,
       [
         classId,
         teacherId,
         st.first,
         st.last,
         SCHOOL,
+        String(101 + si),
         st.parent,
         `${st.first.toLocaleLowerCase("tr")}.veli@ornek.com`,
         "05" + Math.floor(rnd(300000000, 599999999)),

@@ -82,6 +82,7 @@ export default function StudentDetailPage() {
               <Badge tone="iris">{student.grade_level}. sınıf</Badge>
               {cls && <Badge tone="sky">{cls.class_name}</Badge>}
               {student.school_name && <Badge tone="neutral">{student.school_name}</Badge>}
+              {student.student_no && <Badge tone="neutral">No: {student.student_no}</Badge>}
             </div>
             {(student.parent_name || student.parent_email || student.parent_phone) && (
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-gravel">
