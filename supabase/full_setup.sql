@@ -1,3 +1,9 @@
+-- ============================================================
+-- Öğrenci Koçluk — TAM KURULUM (tek dosya)
+-- Supabase SQL Editor'a yapıştırıp RUN yeterli.
+-- 0001_init + 0002_rls + seed birleşik.
+-- ============================================================
+
 -- =========================================================
 -- Öğrenci Koçluk ve Takip Sistemi — Şema (PDF Bölüm 16)
 -- =========================================================
@@ -144,7 +150,7 @@ begin
     coalesce(new.raw_user_meta_data->>'name', ''),
     coalesce(new.raw_user_meta_data->>'surname', ''),
     new.email,
-    'teacher', -- güvenlik: rol her zaman teacher; admin yetkisi yalnızca SQL ile verilir
+    coalesce(new.raw_user_meta_data->>'role', 'teacher'),
     nullif(new.raw_user_meta_data->>'phone', ''),
     nullif(new.raw_user_meta_data->>'branch', ''),
     nullif(new.raw_user_meta_data->>'school_name', '')
@@ -171,3 +177,89 @@ as $$
     select 1 from public.profiles where id = auth.uid() and role = 'admin'
   );
 $$;
+
+
+-- =========================================================
+-- RLS Politikaları — her öğretmen yalnızca kendi verisini görür.
+-- =========================================================
+
+alter table public.profiles enable row level security;
+alter table public.classes enable row level security;
+alter table public.students enable row level security;
+alter table public.subjects enable row level security;
+alter table public.weekly_records enable row level security;
+alter table public.reading_records enable row level security;
+alter table public.exam_results enable row level security;
+alter table public.high_schools enable row level security;
+alter table public.reports enable row level security;
+
+-- ---------- profiles ----------
+create policy "profiles_select_own_or_admin" on public.profiles
+  for select using (id = auth.uid() or public.is_admin());
+create policy "profiles_update_own" on public.profiles
+  for update using (id = auth.uid()) with check (id = auth.uid());
+
+-- ---------- classes ----------
+create policy "classes_all_own" on public.classes
+  for all using (teacher_id = auth.uid()) with check (teacher_id = auth.uid());
+create policy "classes_admin_read" on public.classes
+  for select using (public.is_admin());
+
+-- ---------- students ----------
+create policy "students_all_own" on public.students
+  for all using (teacher_id = auth.uid()) with check (teacher_id = auth.uid());
+create policy "students_admin_read" on public.students
+  for select using (public.is_admin());
+
+-- ---------- subjects (paylaşılan: herkes okur, yönetici yönetir) ----------
+create policy "subjects_read_all" on public.subjects
+  for select using (auth.role() = 'authenticated');
+create policy "subjects_admin_write" on public.subjects
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- ---------- weekly_records ----------
+create policy "weekly_all_own" on public.weekly_records
+  for all using (teacher_id = auth.uid()) with check (teacher_id = auth.uid());
+
+-- ---------- reading_records ----------
+create policy "reading_all_own" on public.reading_records
+  for all using (teacher_id = auth.uid()) with check (teacher_id = auth.uid());
+
+-- ---------- exam_results ----------
+create policy "exam_all_own" on public.exam_results
+  for all using (teacher_id = auth.uid()) with check (teacher_id = auth.uid());
+
+-- ---------- high_schools (paylaşılan: herkes okur, yönetici yönetir) ----------
+create policy "high_schools_read_all" on public.high_schools
+  for select using (auth.role() = 'authenticated');
+create policy "high_schools_admin_write" on public.high_schools
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- ---------- reports ----------
+create policy "reports_all_own" on public.reports
+  for all using (teacher_id = auth.uid()) with check (teacher_id = auth.uid());
+
+
+-- =========================================================
+-- Seed — varsayılan dersler + örnek liseler
+-- =========================================================
+
+insert into public.subjects (subject_name, sort_order) values
+  ('Türkçe', 1),
+  ('Matematik', 2),
+  ('Fen Bilimleri', 3),
+  ('Sosyal Bilgiler', 4),
+  ('İngilizce', 5),
+  ('Din Kültürü ve Ahlak Bilgisi', 6)
+on conflict (subject_name) do nothing;
+
+-- Örnek liseler (PDF örneklerinden — yönetici panelinden çoğaltılabilir)
+insert into public.high_schools (school_name, city, district, school_type, base_score, percentile, year) values
+  ('İzmir Fen Lisesi', 'İzmir', 'Bornova', 'Fen Lisesi', 495.50, 0.5, 2026),
+  ('Bornova Anadolu Lisesi', 'İzmir', 'Bornova', 'Anadolu Lisesi', 405.00, 5.2, 2026),
+  ('Karşıyaka Cihat Kora Anadolu Lisesi', 'İzmir', 'Karşıyaka', 'Anadolu Lisesi', 398.00, 6.8, 2026),
+  ('İzmir Sosyal Bilimler Lisesi', 'İzmir', 'Konak', 'Sosyal Bilimler Lisesi', 410.00, 4.1, 2026),
+  ('Konak Anadolu İmam Hatip Lisesi', 'İzmir', 'Konak', 'İmam Hatip Lisesi', 360.00, 12.0, 2026),
+  ('Buca Anadolu Lisesi', 'İzmir', 'Buca', 'Anadolu Lisesi', 388.00, 8.0, 2026)
+on conflict do nothing;
+
