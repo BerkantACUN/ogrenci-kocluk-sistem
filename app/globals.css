@@ -1,26 +1,175 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@custom-variant dark (&:is(.dark *));
+
+/* =========================================================
+   Öğrenci Koçluk — Tasarım Token'ları
+   Font: monospace (099 estetiği) — Space Mono (display) + JetBrains Mono (UI)
+   Disiplin: Pet Nakliye (hairline border, pill, token-first)
+   Karakter: öğrencilere hitap eden tatlı pastel aksanlar
+   ========================================================= */
+
+@theme {
+  /* ---------- Yüzeyler (sıcak kağıt) ---------- */
+  --color-paper: #faf9f5;
+  --color-cloud: #f3f2ec;
+  --color-chalk: #e8e6de;
+
+  /* ---------- Mürekkep / yazı ---------- */
+  --color-ink: #1b1a16;
+  --color-graphite: #4b483f;
+  --color-gravel: #6f6c61;
+  --color-slate: #a4a094;
+  --color-fog: #c7c3b6;
+
+  /* ---------- Marka + aksanlar (tatlı pastel) ---------- */
+  --color-iris: #6c5ce7;
+  --color-iris-soft: #efecfd;
+  --color-mint: #2fbf91;
+  --color-mint-soft: #e2f7ef;
+  --color-peach: #ff9f43;
+  --color-peach-soft: #fff1e1;
+  --color-sky: #4aa3ff;
+  --color-sky-soft: #e6f2ff;
+  --color-rose: #ff6b9d;
+  --color-rose-soft: #ffe9f1;
+  --color-lemon: #f4b740;
+  --color-lemon-soft: #fdf3dc;
+
+  /* ---------- Fonksiyonel ---------- */
+  --color-signal: #6c5ce7;
+  --color-danger: #e8554e;
+  --color-danger-soft: #fdeae9;
+  --color-success: #2fbf91;
+  --color-warning: #ff9f43;
+
+  /* ---------- Yarıçap ---------- */
+  --radius-tight: 8px;
+  --radius-input: 12px;
+  --radius-card: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 9999px;
+
+  /* ---------- Hareket ---------- */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 160ms;
+  --duration-normal: 280ms;
+  --duration-slow: 480ms;
+
+  /* ---------- Gölge (tatlı, yumuşak) ---------- */
+  --shadow-soft: 0 1px 2px rgba(27, 26, 22, 0.04), 0 4px 16px rgba(27, 26, 22, 0.05);
+  --shadow-pop: 0 2px 6px rgba(27, 26, 22, 0.06), 0 12px 32px rgba(108, 92, 231, 0.10);
+
+  /* ---------- Fontlar (next/font değişkenleri) ---------- */
+  --font-display: var(--font-space-mono), ui-monospace, "Courier New", monospace;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "Courier New", monospace;
+  --font-sans: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* =========================================================
+   Dark tema iskeleti (sonraki aşamada toggle ile açılır)
+   ========================================================= */
+.dark {
+  --color-paper: #14131a;
+  --color-cloud: #1d1c25;
+  --color-chalk: #2c2a36;
+  --color-ink: #f4f2ee;
+  --color-graphite: #d6d3cb;
+  --color-gravel: #a8a496;
+  --color-slate: #76727f;
+  --color-fog: #4a4753;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* =========================================================
+   Base
+   ========================================================= */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-chalk);
+  }
+  html {
+    font-family: var(--font-mono);
+  }
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    line-height: 1.55;
+    letter-spacing: 0.012em;
+    min-height: 100dvh;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.font-display {
+  font-family: var(--font-display);
+}
+
+::selection {
+  background: var(--color-iris);
+  color: #ffffff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-iris);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-chalk);
+  border-radius: 9999px;
+  border: 2px solid var(--color-paper);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-fog);
+}
+
+/* Grid arkaplanı (terminal/teknik dokunuş) */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(27, 26, 22, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(27, 26, 22, 0.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Kart hover lift (tatlı) */
+.lift {
+  transition: transform var(--duration-normal) var(--ease-out-soft),
+    box-shadow var(--duration-normal) var(--ease-out-soft);
+}
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-pop);
 }
