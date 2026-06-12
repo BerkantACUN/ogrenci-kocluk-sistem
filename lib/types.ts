@@ -75,6 +75,18 @@ export interface ReadingRecord {
   created_at: string;
 }
 
+export interface ExamSubjectResult {
+  id: string;
+  exam_id: string;
+  teacher_id: string;
+  subject_id: string;
+  correct: number;
+  wrong: number;
+  blank: number;
+  net: number; // generated: correct - wrong/3
+  created_at: string;
+}
+
 export interface ExamResult {
   id: string;
   student_id: string;
@@ -84,6 +96,8 @@ export interface ExamResult {
   exam_type: string | null;
   score: number;
   created_at: string;
+  /** Ders bazlı doğru/yanlış/boş kırılımı (varsa). */
+  exam_subject_results?: ExamSubjectResult[];
 }
 
 export interface HighSchool {

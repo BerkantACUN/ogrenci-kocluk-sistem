@@ -150,7 +150,7 @@ begin
     coalesce(new.raw_user_meta_data->>'name', ''),
     coalesce(new.raw_user_meta_data->>'surname', ''),
     new.email,
-    coalesce(new.raw_user_meta_data->>'role', 'teacher'),
+    'teacher', -- güvenlik: rol her zaman teacher; admin yetkisi yalnızca SQL ile verilir
     nullif(new.raw_user_meta_data->>'phone', ''),
     nullif(new.raw_user_meta_data->>'branch', ''),
     nullif(new.raw_user_meta_data->>'school_name', '')
@@ -237,6 +237,60 @@ create policy "high_schools_admin_write" on public.high_schools
 
 -- ---------- reports ----------
 create policy "reports_all_own" on public.reports
+  for all using (teacher_id = auth.uid()) with check (teacher_id = auth.uid());
+
+
+-- =========================================================
+-- Güvenlik: yeni kullanıcı profili her zaman 'teacher' rolüyle oluşturulur.
+-- (Önceki sürüm metadata->>'role' okuyordu; bu, API'den admin escalation'a açıktı.)
+-- Admin yetkisi yalnızca yönetici tarafından SQL ile verilir.
+-- =========================================================
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, name, surname, email, role, phone, branch, school_name)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'name', ''),
+    coalesce(new.raw_user_meta_data->>'surname', ''),
+    new.email,
+    'teacher',
+    nullif(new.raw_user_meta_data->>'phone', ''),
+    nullif(new.raw_user_meta_data->>'branch', ''),
+    nullif(new.raw_user_meta_data->>'school_name', '')
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+
+-- =========================================================
+-- Deneme ders bazlı doğru/yanlış/boş + net (LGS: net = doğru - yanlış/3)
+-- =========================================================
+
+create table if not exists public.exam_subject_results (
+  id uuid primary key default gen_random_uuid(),
+  exam_id uuid not null references public.exam_results(id) on delete cascade,
+  teacher_id uuid not null references public.profiles(id) on delete cascade,
+  subject_id uuid not null references public.subjects(id),
+  correct int not null default 0 check (correct >= 0),
+  wrong int not null default 0 check (wrong >= 0),
+  blank int not null default 0 check (blank >= 0),
+  net numeric(6,2) generated always as (correct - (wrong::numeric / 3)) stored,
+  created_at timestamptz not null default now(),
+  unique (exam_id, subject_id)
+);
+create index if not exists idx_esr_exam on public.exam_subject_results(exam_id);
+
+alter table public.exam_subject_results enable row level security;
+
+drop policy if exists "esr_all_own" on public.exam_subject_results;
+create policy "esr_all_own" on public.exam_subject_results
   for all using (teacher_id = auth.uid()) with check (teacher_id = auth.uid());
 
 

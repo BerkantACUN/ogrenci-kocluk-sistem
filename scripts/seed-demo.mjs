@@ -69,6 +69,15 @@ const AFYON_SCHOOLS = [
   ["Afyonkarahisar Anadolu İmam Hatip Lisesi", "İmam Hatip Lisesi", 352.0, 18.0],
 ];
 
+const LGS_Q = {
+  "Türkçe": 20,
+  "Matematik": 20,
+  "Fen Bilimleri": 20,
+  "Sosyal Bilgiler": 10,
+  "İngilizce": 10,
+  "Din Kültürü ve Ahlak Bilgisi": 10,
+};
+
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const rnd = (a, b) => a + Math.random() * (b - a);
 
@@ -150,11 +159,26 @@ async function main() {
       const d = new Date();
       d.setDate(d.getDate() - (28 - i * 7));
       const score = clamp(baseScore + i * Math.round(rnd(6, 16)) + Math.round(rnd(-8, 8)), 200, 500);
-      await client.query(
+      const { rows: exRow } = await client.query(
         `insert into public.exam_results (student_id, teacher_id, exam_name, exam_date, exam_type, score)
-         values ($1,$2,$3,$4,$5,$6)`,
+         values ($1,$2,$3,$4,$5,$6) returning id`,
         [studentId, teacherId, i % 2 === 0 ? "Türkiye Geneli LGS Denemesi" : "Kurum İçi Deneme", iso(d), "LGS Denemesi", score],
       );
+      const examId = exRow[0].id;
+      // Ders bazlı doğru/yanlış/boş
+      for (const [subjName, q] of Object.entries(LGS_Q)) {
+        const sid = subjectByName[subjName];
+        if (!sid) continue;
+        const rate = clamp(st.base + i * 0.02 + rnd(-0.1, 0.1), 0.2, 0.97);
+        const correct = Math.min(q, Math.round(q * rate));
+        const blank = Math.round(rnd(0, (q - correct) * 0.4));
+        const wrong = Math.max(0, q - correct - blank);
+        await client.query(
+          `insert into public.exam_subject_results (exam_id, teacher_id, subject_id, correct, wrong, blank)
+           values ($1,$2,$3,$4,$5,$6)`,
+          [examId, teacherId, sid, correct, wrong, blank],
+        );
+      }
       ex++;
     }
   }

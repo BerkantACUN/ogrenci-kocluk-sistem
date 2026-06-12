@@ -18,6 +18,10 @@ const combined =
   "\n\n" +
   read("migrations/0002_rls.sql") +
   "\n\n" +
+  read("migrations/0003_secure_signup_role.sql") +
+  "\n\n" +
+  read("migrations/0004_exam_subjects.sql") +
+  "\n\n" +
   read("seed.sql") +
   "\n";
 

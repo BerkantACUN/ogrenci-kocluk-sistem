@@ -6,11 +6,27 @@ import type {
   WeeklyRecord,
   ReadingRecord,
   ExamResult,
+  ExamSubjectResult,
   SubjectStat,
   TopicStat,
   WeeklyTotals,
 } from "./types";
 import { getWeekForDate } from "./weeks";
+import { NET_WRONG_DIVISOR } from "./constants";
+
+/** Tek ders için net (LGS: doğru - yanlış/3). */
+export function netOf(correct: number, wrong: number): number {
+  return Math.round((correct - wrong / NET_WRONG_DIVISOR) * 100) / 100;
+}
+
+/** Bir denemenin ders kırılımından toplam doğru/yanlış/boş/net. */
+export function examTotals(rows: ExamSubjectResult[]) {
+  const correct = rows.reduce((s, r) => s + r.correct, 0);
+  const wrong = rows.reduce((s, r) => s + r.wrong, 0);
+  const blank = rows.reduce((s, r) => s + r.blank, 0);
+  const net = Math.round((correct - wrong / NET_WRONG_DIVISOR) * 100) / 100;
+  return { correct, wrong, blank, net, totalQuestions: correct + wrong + blank };
+}
 
 /** Toplam soru = doğru + yanlış. */
 export function totalQuestions(correct: number, wrong: number): number {

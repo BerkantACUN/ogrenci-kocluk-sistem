@@ -62,6 +62,19 @@ export const SCHOOL_TYPES = [
   "Güzel Sanatlar Lisesi",
 ] as const;
 
+/** LGS'de ders başına soru sayısı (varsayılan; öğretmen değiştirebilir). */
+export const LGS_QUESTION_COUNTS: Record<string, number> = {
+  "Türkçe": 20,
+  "Matematik": 20,
+  "Fen Bilimleri": 20,
+  "Sosyal Bilgiler": 10,
+  "İngilizce": 10,
+  "Din Kültürü ve Ahlak Bilgisi": 10,
+};
+
+/** Net hesaplama: LGS'de 3 yanlış 1 doğruyu götürür. */
+export const NET_WRONG_DIVISOR = 3;
+
 /** Deneme türleri. */
 export const EXAM_TYPES = [
   "LGS Denemesi",
