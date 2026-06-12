@@ -43,6 +43,7 @@ export function StudentFormModal({ open, onClose, initial, defaultClassId, defau
       grade_level: initial?.grade_level ?? defaultGrade ?? 8,
       class_id: initial?.class_id ?? defaultClassId ?? null,
       school_name: initial?.school_name ?? "",
+      student_no: initial?.student_no ?? "",
       parent_name: initial?.parent_name ?? "",
       parent_email: initial?.parent_email ?? "",
       parent_phone: initial?.parent_phone ?? "",
@@ -103,9 +104,14 @@ export function StudentFormModal({ open, onClose, initial, defaultClassId, defau
             </Select>
           </Field>
         </div>
-        <Field label="Okul adı" htmlFor="school_name" optional error={errors.school_name?.message}>
-          <Input id="school_name" placeholder="Atatürk O.O." {...register("school_name")} />
-        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Okul adı" htmlFor="school_name" optional error={errors.school_name?.message}>
+            <Input id="school_name" placeholder="Atatürk O.O." {...register("school_name")} />
+          </Field>
+          <Field label="Okul no" htmlFor="student_no" optional hint="Excel eşleştirmede kullanılır" error={errors.student_no?.message}>
+            <Input id="student_no" placeholder="123" {...register("student_no")} />
+          </Field>
+        </div>
 
         <div className="rounded-input bg-cloud/50 p-3">
           <p className="mb-3 text-[12px] font-semibold uppercase tracking-wide text-slate">Veli bilgileri</p>

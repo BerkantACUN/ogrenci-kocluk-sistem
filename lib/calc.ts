@@ -169,6 +169,14 @@ export function examSeries(exams: ExamResult[]) {
     .map((e) => ({ id: e.id, name: e.exam_name, date: e.exam_date, score: e.score }));
 }
 
+/** Ders kırılımı olan denemelerin ortalama neti. */
+export function avgNet(exams: ExamResult[]): number | null {
+  const withRows = exams.filter((e) => (e.exam_subject_results?.length ?? 0) > 0);
+  if (!withRows.length) return null;
+  const sum = withRows.reduce((s, e) => s + examTotals(e.exam_subject_results ?? []).net, 0);
+  return Math.round((sum / withRows.length) * 100) / 100;
+}
+
 /** Son deneme - bir önceki deneme farkı. */
 export function lastExamDelta(exams: ExamResult[]): { last: number | null; delta: number | null } {
   const sorted = examSeries(exams);

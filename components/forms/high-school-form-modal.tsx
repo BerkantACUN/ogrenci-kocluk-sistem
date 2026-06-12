@@ -18,9 +18,11 @@ interface Props {
   open: boolean;
   onClose: () => void;
   initial?: HighSchool;
+  /** Yeni kayıt sahibi: null = global (yönetici), aksi halde öğretmen id'si. */
+  ownerId: string | null;
 }
 
-export function HighSchoolFormModal({ open, onClose, initial }: Props) {
+export function HighSchoolFormModal({ open, onClose, initial, ownerId }: Props) {
   const create = useCreateHighSchool();
   const update = useUpdateHighSchool();
   const editing = Boolean(initial);
@@ -50,7 +52,7 @@ export function HighSchoolFormModal({ open, onClose, initial }: Props) {
         await update.mutateAsync({ id: initial.id, input: values });
         toast.success("Lise güncellendi.");
       } else {
-        await create.mutateAsync(values);
+        await create.mutateAsync({ input: values, teacherId: ownerId });
         toast.success("Lise eklendi. 🏫");
       }
       reset();

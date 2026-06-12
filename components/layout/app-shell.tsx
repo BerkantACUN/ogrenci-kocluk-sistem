@@ -32,10 +32,10 @@ const teacherNav: NavItem[] = [
   { href: "/panel", label: "Genel Durum", icon: LayoutDashboard, match: (p) => p === "/panel" },
   { href: "/siniflar", label: "Sınıflar", icon: GraduationCap, match: (p) => p.startsWith("/siniflar") || p.startsWith("/ogrenciler") },
   { href: "/raporlar", label: "Raporlar", icon: FileBarChart, match: (p) => p.startsWith("/raporlar") },
+  { href: "/yonetici/liseler", label: "Liseler", icon: School, match: (p) => p.startsWith("/yonetici/liseler") },
 ];
 
 const adminNav: NavItem[] = [
-  { href: "/yonetici/liseler", label: "Liseler", icon: School, match: (p) => p.startsWith("/yonetici/liseler") },
   { href: "/yonetici/ogretmenler", label: "Öğretmenler", icon: Users, match: (p) => p.startsWith("/yonetici/ogretmenler") },
 ];
 

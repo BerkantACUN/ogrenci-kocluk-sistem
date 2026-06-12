@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { ListChecks, Percent, BookOpen, Target, TrendingUp, TrendingDown } from "lucide-react";
+import { ListChecks, Percent, BookOpen, Target, TrendingUp, TrendingDown, Sigma } from "lucide-react";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ import {
   lastExamDelta,
   topicStats,
   strongestWeakest,
+  avgNet,
 } from "@/lib/calc";
 import { subjectNameMap } from "@/hooks/use-subjects";
 import { formatPercent } from "@/lib/utils";
@@ -43,16 +44,18 @@ export function OverviewTab({ weekly, reading, exams, subjects }: Props) {
   const readSeries = useMemo(() => readingSeries(reading), [reading]);
   const examLine = useMemo(() => examSeries(exams), [exams]);
   const { last, delta } = useMemo(() => lastExamDelta(exams), [exams]);
+  const ortNet = useMemo(() => avgNet(exams), [exams]);
   const topics = useMemo(() => topicStats(weekly, map), [weekly, map]);
   const { strongest, weakest } = useMemo(() => strongestWeakest(topics), [topics]);
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatCard icon={ListChecks} label="Toplam çözülen soru" value={totals.total} tone="iris" />
         <StatCard icon={Percent} label="Genel başarı" value={totals.successRate} suffix="%" tone="mint" />
         <StatCard icon={BookOpen} label="Okunan sayfa" value={totalPages(reading)} tone="peach" />
         <StatCard icon={Target} label="Son deneme puanı" value={last ?? 0} tone="rose" delta={delta} />
+        <StatCard icon={Sigma} label="Ortalama net" value={ortNet ?? 0} tone="sky" />
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">

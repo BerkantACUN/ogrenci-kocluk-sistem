@@ -38,9 +38,11 @@ function toPayload(input: HighSchoolInput) {
 export function useCreateHighSchool() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: HighSchoolInput) => {
+    mutationFn: async ({ input, teacherId }: { input: HighSchoolInput; teacherId: string | null }) => {
       const supabase = createClient();
-      const { error } = await supabase.from("high_schools").insert(toPayload(input));
+      const { error } = await supabase
+        .from("high_schools")
+        .insert({ ...toPayload(input), teacher_id: teacherId });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.highSchools }),

@@ -38,6 +38,18 @@ export function ReportTab({ student, weekly, reading, exams, subjects }: Props) 
   const [weekStart, setWeekStart] = useState(weeks[0].start);
   const [monthKey, setMonthKey] = useState(`${months[0].year}-${months[0].monthIndex0}`);
 
+  // Taban puanı yılı (yıl yıl karşılaştırma)
+  const schoolYears = useMemo(
+    () => [...new Set((highSchools ?? []).map((s) => s.year))].sort((a, b) => b - a),
+    [highSchools],
+  );
+  const [schoolYear, setSchoolYear] = useState<number | null>(null);
+  const activeYear = schoolYear ?? schoolYears[0] ?? null;
+  const schoolsForYear = useMemo(
+    () => (highSchools ?? []).filter((s) => activeYear == null || s.year === activeYear),
+    [highSchools, activeYear],
+  );
+
   const report = useMemo(() => {
     if (type === "weekly") {
       const wIdx = weeks.findIndex((w) => w.start === weekStart);
@@ -58,7 +70,7 @@ export function ReportTab({ student, weekly, reading, exams, subjects }: Props) 
         reading: read,
         exams: exs,
         subjectNameById: map,
-        schools: highSchools ?? [],
+        schools: schoolsForYear,
       });
     }
     const [y, m] = monthKey.split("-").map(Number);
@@ -82,7 +94,7 @@ export function ReportTab({ student, weekly, reading, exams, subjects }: Props) 
       subjectNameById: map,
       schools: highSchools ?? [],
     });
-  }, [type, weekStart, monthKey, weeks, weekly, reading, exams, map, highSchools, student]);
+  }, [type, weekStart, monthKey, weeks, weekly, reading, exams, map, schoolsForYear, student]);
 
   function downloadPdf() {
     generateReportPdf(report);
@@ -234,9 +246,27 @@ export function ReportTab({ student, weekly, reading, exams, subjects }: Props) 
         {/* Lise eşleştirme */}
         {report.lastScore != null && (
           <div className="mt-5">
-            <p className="mb-2 flex items-center gap-1.5 text-[13px] font-semibold text-ink">
-              <School className="h-4 w-4 text-iris" /> Lise eşleştirme (son puan: {report.lastScore})
-            </p>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
+                <School className="h-4 w-4 text-iris" /> Lise eşleştirme (son puan: {report.lastScore})
+              </p>
+              {schoolYears.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[12px] text-slate">Taban puanı yılı:</span>
+                  <select
+                    value={activeYear ?? ""}
+                    onChange={(e) => setSchoolYear(Number(e.target.value))}
+                    className="h-8 rounded-input border border-chalk bg-white px-2 text-[12.5px] text-ink focus:border-iris focus:outline-none"
+                  >
+                    {schoolYears.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <SchoolList title="Yerleşebileceği liseler" icon={School} items={report.schoolMatch.eligible} tone="mint" />
               <SchoolList title="Hedef liseler" icon={Target} items={report.schoolMatch.target} tone="peach" />
@@ -270,7 +300,14 @@ function SchoolList({
 }: {
   title: string;
   icon: typeof School;
-  items: { id: string; school_name: string; city: string; district: string | null; base_score: number }[];
+  items: {
+    id: string;
+    school_name: string;
+    city: string;
+    district: string | null;
+    base_score: number;
+    percentile?: number | null;
+  }[];
   tone: BadgeProps["tone"];
 }) {
   return (
@@ -287,9 +324,10 @@ function SchoolList({
                 <span className="text-[11px] text-slate">
                   {h.city}
                   {h.district ? ` / ${h.district}` : ""}
+                  {h.percentile != null ? ` · %${formatNumber(h.percentile, 2)} dilim` : ""}
                 </span>
               </span>
-              <Badge tone={tone}>{h.base_score}</Badge>
+              <Badge tone={tone}>{formatNumber(h.base_score, 2)}</Badge>
             </li>
           ))}
         </ul>

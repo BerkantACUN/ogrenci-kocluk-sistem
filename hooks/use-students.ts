@@ -41,6 +41,7 @@ function toPayload(input: StudentInput) {
     grade_level: input.grade_level,
     class_id: input.class_id ?? null,
     school_name: nn(input.school_name),
+    student_no: nn(input.student_no),
     parent_name: nn(input.parent_name),
     parent_email: nn(input.parent_email),
     parent_phone: nn(input.parent_phone),

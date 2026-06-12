@@ -22,6 +22,8 @@ const combined =
   "\n\n" +
   read("migrations/0004_exam_subjects.sql") +
   "\n\n" +
+  read("migrations/0005_hs_teacher_student_no.sql") +
+  "\n\n" +
   read("seed.sql") +
   "\n";
 

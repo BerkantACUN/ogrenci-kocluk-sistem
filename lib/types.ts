@@ -36,6 +36,7 @@ export interface Student {
   last_name: string;
   grade_level: number;
   school_name: string | null;
+  student_no: string | null;
   parent_name: string | null;
   parent_email: string | null;
   parent_phone: string | null;
@@ -102,6 +103,7 @@ export interface ExamResult {
 
 export interface HighSchool {
   id: string;
+  teacher_id: string | null; // null = global (sistem/yönetici)
   school_name: string;
   city: string;
   district: string | null;
