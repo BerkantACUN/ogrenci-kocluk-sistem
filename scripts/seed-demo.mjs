@@ -23,7 +23,9 @@ function mondayOf(d) {
   x.setHours(0, 0, 0, 0);
   return x;
 }
-const iso = (d) => d.toISOString().slice(0, 10);
+// Yerel tarih (UTC kayması olmasın — app/weeks.ts dayjs ile aynı)
+const iso = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 function recentWeeks(n) {
   const weeks = [];
   const cur = mondayOf(new Date());
@@ -81,8 +83,10 @@ async function main() {
   const { rows: subs } = await client.query("select id, subject_name from public.subjects");
   const subjectByName = Object.fromEntries(subs.map((s) => [s.subject_name, s.id]));
 
-  // İdempotent temizlik
-  await client.query("delete from public.classes where teacher_id=$1 and class_name=$2", [teacherId, CLASS_NAME]);
+  // İdempotent temizlik — öğrencileri doğrudan sil (class_id on delete set null olduğu için
+  // sınıfı silmek öğrencileri silmez; kayıtlar students cascade ile gider).
+  await client.query("delete from public.students where teacher_id=$1", [teacherId]);
+  await client.query("delete from public.classes where teacher_id=$1", [teacherId]);
   await client.query("delete from public.high_schools where city=$1", [CITY]);
 
   const { rows: cls } = await client.query(
