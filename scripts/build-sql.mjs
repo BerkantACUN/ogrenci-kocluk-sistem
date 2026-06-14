@@ -24,6 +24,8 @@ const combined =
   "\n\n" +
   read("migrations/0005_hs_teacher_student_no.sql") +
   "\n\n" +
+  read("migrations/0006_student_target_school.sql") +
+  "\n\n" +
   read("seed.sql") +
   "\n";
 

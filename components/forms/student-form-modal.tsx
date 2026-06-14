@@ -13,6 +13,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { studentSchema, type StudentInput } from "@/lib/validations";
 import { useCreateStudent, useUpdateStudent } from "@/hooks/use-students";
 import { useClasses } from "@/hooks/use-classes";
+import { useHighSchools } from "@/hooks/use-high-schools";
+import { formatNumber } from "@/lib/utils";
 import { GRADE_LEVELS } from "@/lib/constants";
 import type { Student } from "@/lib/types";
 
@@ -28,7 +30,12 @@ export function StudentFormModal({ open, onClose, initial, defaultClassId, defau
   const create = useCreateStudent();
   const update = useUpdateStudent();
   const { data: classes } = useClasses();
+  const { data: highSchools } = useHighSchools();
   const editing = Boolean(initial);
+
+  const sortedSchools = (highSchools ?? [])
+    .slice()
+    .sort((a, b) => b.base_score - a.base_score);
 
   const {
     register,
@@ -44,6 +51,7 @@ export function StudentFormModal({ open, onClose, initial, defaultClassId, defau
       class_id: initial?.class_id ?? defaultClassId ?? null,
       school_name: initial?.school_name ?? "",
       student_no: initial?.student_no ?? "",
+      target_high_school_id: initial?.target_high_school_id ?? null,
       parent_name: initial?.parent_name ?? "",
       parent_email: initial?.parent_email ?? "",
       parent_phone: initial?.parent_phone ?? "",
@@ -112,6 +120,20 @@ export function StudentFormModal({ open, onClose, initial, defaultClassId, defau
             <Input id="student_no" placeholder="123" {...register("student_no")} />
           </Field>
         </div>
+
+        <Field label="Hedef lise" htmlFor="target_high_school_id" optional hint="Raporda hedef ve kalan puan gösterilir" error={errors.target_high_school_id?.message}>
+          <Select
+            id="target_high_school_id"
+            {...register("target_high_school_id", { setValueAs: (v) => (v === "" ? null : v) })}
+          >
+            <option value="">— Hedef seçilmedi —</option>
+            {sortedSchools.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.school_name} · {h.city} · {formatNumber(h.base_score, 1)}
+              </option>
+            ))}
+          </Select>
+        </Field>
 
         <div className="rounded-input bg-cloud/50 p-3">
           <p className="mb-3 text-[12px] font-semibold uppercase tracking-wide text-slate">Veli bilgileri</p>

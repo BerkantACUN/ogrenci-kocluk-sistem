@@ -37,6 +37,7 @@ export interface Student {
   grade_level: number;
   school_name: string | null;
   student_no: string | null;
+  target_high_school_id: string | null;
   parent_name: string | null;
   parent_email: string | null;
   parent_phone: string | null;

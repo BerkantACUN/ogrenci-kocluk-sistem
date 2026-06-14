@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   FileDown,
@@ -36,7 +36,7 @@ import { FadeIn } from "@/components/motion/fade-in";
 import { useHighSchools } from "@/hooks/use-high-schools";
 import { subjectNameMap } from "@/hooks/use-subjects";
 import { buildReport } from "@/lib/reports";
-import { generateReportPdf } from "@/lib/pdf";
+import { captureElementToPdf } from "@/lib/pdf-capture";
 import { avgNet } from "@/lib/calc";
 import { recentWeeks, recentMonths, monthRange, formatDateShort } from "@/lib/weeks";
 import { formatPercent, formatNumber, formatDelta } from "@/lib/utils";
@@ -126,17 +126,42 @@ export function ReportTab({ student, weekly, reading, exams, subjects }: Props) 
   );
   const periodAvgNet = useMemo(() => avgNet(periodExams), [periodExams]);
 
-  function downloadPdf() {
-    generateReportPdf(report);
-    toast.success("PDF indiriliyor… 📄");
+  const targetSchool = useMemo(
+    () => (highSchools ?? []).find((h) => h.id === student.target_high_school_id) ?? null,
+    [highSchools, student.target_high_school_id],
+  );
+
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  function fileName() {
+    return `${student.first_name}_${student.last_name}_${report.periodLabel}`.replace(/\s+/g, "_") + ".pdf";
   }
 
-  function sendToParent() {
+  async function downloadPdf() {
+    if (!reportRef.current) return;
+    const t = toast.loading("PDF hazırlanıyor…");
+    try {
+      await captureElementToPdf(reportRef.current, fileName());
+      toast.success("PDF indirildi 📄", { id: t });
+    } catch {
+      toast.error("PDF oluşturulamadı.", { id: t });
+    }
+  }
+
+  async function sendToParent() {
     if (!student.parent_email) {
       toast.error("Bu öğrenci için veli e-postası tanımlı değil.");
       return;
     }
-    generateReportPdf(report);
+    if (reportRef.current) {
+      const t = toast.loading("PDF hazırlanıyor…");
+      try {
+        await captureElementToPdf(reportRef.current, fileName());
+        toast.success("PDF indirildi, maile ekleyebilirsiniz 📄", { id: t });
+      } catch {
+        toast.dismiss(t);
+      }
+    }
     const subject = `${student.first_name} ${student.last_name} — ${report.periodLabel} Raporu`;
     const body = [
       `Sayın ${student.parent_name ?? "Veli"},`,
@@ -201,6 +226,7 @@ export function ReportTab({ student, weekly, reading, exams, subjects }: Props) 
       </Card>
 
       {/* ============ RAPOR ============ */}
+      <div ref={reportRef}>
       <Card className="overflow-hidden p-0">
         {/* Hero */}
         <div className="relative overflow-hidden bg-iris px-5 py-6 text-white">
@@ -267,6 +293,47 @@ export function ReportTab({ student, weekly, reading, exams, subjects }: Props) 
             <StatTile icon={Target} label="Son deneme" value={report.lastScore != null ? formatNumber(report.lastScore) : "—"} tone="rose" />
             <StatTile icon={Sigma} label="Ortalama net" value={periodAvgNet != null ? periodAvgNet.toFixed(2) : "—"} tone="sky" />
           </div>
+
+          {/* Hedef lise */}
+          {targetSchool && (
+            <div className="rounded-card border border-iris/40 bg-iris-soft/50 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 text-[11.5px] font-semibold text-iris">
+                    <Target className="h-3.5 w-3.5" /> Hedef lise
+                  </p>
+                  <p className="font-display text-[16px] font-bold text-ink">{targetSchool.school_name}</p>
+                  <p className="text-[12px] text-gravel">
+                    {targetSchool.city}
+                    {targetSchool.district ? ` / ${targetSchool.district}` : ""} · taban {formatNumber(targetSchool.base_score, 2)}
+                    {targetSchool.percentile != null ? ` · %${formatNumber(targetSchool.percentile, 2)} dilim` : ""}
+                  </p>
+                </div>
+                <div className="text-right">
+                  {report.lastScore == null ? (
+                    <span className="text-[12px] text-slate">Henüz deneme yok</span>
+                  ) : report.lastScore >= targetSchool.base_score ? (
+                    <span className="inline-flex items-center gap-1 rounded-pill bg-mint-soft px-3 py-1 text-[13px] font-bold text-mint">
+                      <Trophy className="h-4 w-4" /> Hedefe ulaştın! 🎉
+                    </span>
+                  ) : (
+                    <span className="font-display text-[18px] font-bold text-iris">
+                      {formatNumber(targetSchool.base_score - report.lastScore, 1)}
+                      <span className="ml-1 text-[12px] font-normal text-gravel">puan kaldı</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+              {report.lastScore != null && (
+                <div className="mt-3 h-2.5 overflow-hidden rounded-pill bg-white">
+                  <div
+                    className="h-full rounded-pill bg-iris transition-all duration-500"
+                    style={{ width: `${Math.min(100, (report.lastScore / targetSchool.base_score) * 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* En başarılı / gelişime açık ders */}
           {(report.bestSubject || report.worstSubject) && (
@@ -424,6 +491,7 @@ export function ReportTab({ student, weekly, reading, exams, subjects }: Props) 
           )}
         </div>
       </Card>
+      </div>
     </div>
   );
 }

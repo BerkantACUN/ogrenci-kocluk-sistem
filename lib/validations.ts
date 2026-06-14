@@ -38,6 +38,7 @@ export const studentSchema = z.object({
   class_id: z.string().uuid().optional().nullable(),
   school_name: z.string().optional().or(z.literal("")),
   student_no: z.string().optional().or(z.literal("")),
+  target_high_school_id: z.string().uuid().optional().nullable(),
   parent_name: z.string().optional().or(z.literal("")),
   parent_email: z.string().email("Geçerli bir veli e-postası giriniz").optional().or(z.literal("")),
   parent_phone: z.string().optional().or(z.literal("")),
