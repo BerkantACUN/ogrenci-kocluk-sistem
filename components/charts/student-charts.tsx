@@ -13,6 +13,13 @@ import {
   CartesianGrid,
   Tooltip,
   Cell,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  PieChart,
+  Pie,
 } from "recharts";
 import { type ReactNode } from "react";
 import {
@@ -149,6 +156,58 @@ export function ReadingChart({ data }: { data: { label: string; pages: number }[
           <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v} sayfa`, "Okuma"]} cursor={{ fill: "rgba(255,159,67,.08)" }} />
           <Bar dataKey="pages" name="Sayfa" fill="#ff9f43" radius={[6, 6, 0, 0]} maxBarSize={40} />
         </BarChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+const SHORT_NAME: Record<string, string> = {
+  "Türkçe": "Türkçe",
+  "Matematik": "Mat",
+  "Fen Bilimleri": "Fen",
+  "Sosyal Bilgiler": "Sosyal",
+  "İngilizce": "İng",
+  "Din Kültürü ve Ahlak Bilgisi": "Din",
+};
+
+export function SubjectRadarChart({ data }: { data: SubjectStat[] }) {
+  const chartData = data.map((s) => ({
+    subject: SHORT_NAME[s.subjectName] ?? s.subjectName,
+    successRate: s.successRate,
+  }));
+  return (
+    <ChartCard icon={BarChart3} title="Ders Dengesi (Radar)" empty={data.length < 3}>
+      <ResponsiveContainer width="100%" height="100%">
+        <RadarChart data={chartData} outerRadius="72%">
+          <PolarGrid stroke={GRID} />
+          <PolarAngleAxis dataKey="subject" tick={{ ...AXIS, fontSize: 10 }} />
+          <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+          <Radar dataKey="successRate" stroke="#6c5ce7" strokeWidth={2} fill="#6c5ce7" fillOpacity={0.22} />
+          <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`%${v}`, "Başarı"]} />
+        </RadarChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
+
+export function AccuracyDonut({ correct, wrong, blank = 0 }: { correct: number; wrong: number; blank?: number }) {
+  const data = [
+    { name: "Doğru", value: correct, fill: "#2fbf91" },
+    { name: "Yanlış", value: wrong, fill: "#e8554e" },
+    ...(blank > 0 ? [{ name: "Boş", value: blank, fill: "#c7c3b6" }] : []),
+  ];
+  const total = correct + wrong + blank;
+  return (
+    <ChartCard icon={Percent} title="Doğru / Yanlış Dağılımı" empty={total === 0}>
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie data={data} dataKey="value" nameKey="name" innerRadius="55%" outerRadius="80%" paddingAngle={2} stroke="none">
+            {data.map((d) => (
+              <Cell key={d.name} fill={d.fill} />
+            ))}
+          </Pie>
+          <Tooltip contentStyle={tooltipStyle} />
+        </PieChart>
       </ResponsiveContainer>
     </ChartCard>
   );
