@@ -86,6 +86,94 @@ function studentFullNameNorm(s: Student): string {
   return norm(`${s.first_name}${s.last_name}`);
 }
 
+/* ============== Öğrenci toplu içe aktarma ============== */
+
+export interface StudentImportRow {
+  rowIndex: number;
+  first_name: string;
+  last_name: string;
+  student_no: string | null;
+  grade_level: number;
+  school_name: string | null;
+  parent_name: string | null;
+  parent_email: string | null;
+  parent_phone: string | null;
+  note: string | null;
+}
+
+export interface StudentParseResult {
+  valid: StudentImportRow[];
+  invalid: { rowIndex: number; label: string; reason: string }[];
+}
+
+function cell(row: Record<string, unknown>, header?: string): string {
+  return header ? String(row[header] ?? "").trim() : "";
+}
+
+export function parseStudentRows(
+  rows: Record<string, unknown>[],
+  defaultGrade: number,
+): StudentParseResult {
+  const headers = rows.length ? Object.keys(rows[0]) : [];
+  const h = {
+    ad: findHeader(headers, ["ad", "isim", "adi"]),
+    soyad: findHeader(headers, ["soyad", "soyisim", "soyadi"]),
+    adsoyad: findHeader(headers, ["adsoyad", "isimsoyisim", "adsoyisim", "adsoyadi"]),
+    no: findHeader(headers, ["okulno", "no", "numara", "ogrencino", "ogrencinumarasi"]),
+    grade: findHeader(headers, ["sinifduzeyi", "sinif", "duzey", "sinifi"]),
+    okul: findHeader(headers, ["okuladi", "okul", "okuladi"]),
+    veliAd: findHeader(headers, ["veliadi", "veliadsoyad", "veli", "veliadisoyadi"]),
+    veliMail: findHeader(headers, ["velieposta", "veliemail", "velimail", "eposta", "email", "mail"]),
+    veliTel: findHeader(headers, ["velitelefon", "velitel", "telefon", "tel", "veligsm", "gsm"]),
+    note: findHeader(headers, ["not", "aciklama", "notu"]),
+  };
+
+  const valid: StudentImportRow[] = [];
+  const invalid: StudentParseResult["invalid"] = [];
+
+  rows.forEach((row, i) => {
+    let first = cell(row, h.ad);
+    let last = cell(row, h.soyad);
+    if ((!first || !last) && h.adsoyad) {
+      const full = cell(row, h.adsoyad);
+      const parts = full.split(/\s+/);
+      if (parts.length >= 2) {
+        last = last || parts.pop()!;
+        first = first || parts.join(" ");
+      } else {
+        first = first || full;
+      }
+    }
+
+    // Tamamen boş satır → atla
+    if (!first && !last && !cell(row, h.no)) return;
+
+    if (!first || !last) {
+      invalid.push({ rowIndex: i, label: first || last || `Satır ${i + 2}`, reason: "Ad ve soyad zorunlu" });
+      return;
+    }
+
+    const gradeRaw = cell(row, h.grade);
+    const gradeNum = parseInt(gradeRaw.replace(/[^0-9]/g, ""), 10);
+    const grade_level = Number.isFinite(gradeNum) && gradeNum >= 1 && gradeNum <= 12 ? gradeNum : defaultGrade;
+
+    valid.push({
+      rowIndex: i,
+      first_name: first,
+      last_name: last,
+      student_no: cell(row, h.no) || null,
+      grade_level,
+      school_name: cell(row, h.okul) || null,
+      parent_name: cell(row, h.veliAd) || null,
+      parent_email: cell(row, h.veliMail) || null,
+      parent_phone: cell(row, h.veliTel) || null,
+      note: cell(row, h.note) || null,
+    });
+  });
+
+  return { valid, invalid };
+}
+
 export function parseExamRows(
   rows: Record<string, unknown>[],
   students: Student[],

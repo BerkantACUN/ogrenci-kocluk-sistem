@@ -8,6 +8,7 @@ import { useClass } from "@/hooks/use-classes";
 import { useStudents } from "@/hooks/use-students";
 import { useSubjects } from "@/hooks/use-subjects";
 import { ExcelImportModal } from "@/components/forms/excel-import-modal";
+import { StudentImportModal } from "@/components/forms/student-import-modal";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export default function ClassDetailPage() {
   const { data: subjects } = useSubjects();
   const [modalOpen, setModalOpen] = useState(false);
   const [excelOpen, setExcelOpen] = useState(false);
+  const [studentExcelOpen, setStudentExcelOpen] = useState(false);
 
   if (isLoading) return <PageLoader />;
   if (!cls) return <EmptyState icon={Users} title="Sınıf bulunamadı" />;
@@ -37,7 +39,10 @@ export default function ClassDetailPage() {
         subtitle={`${cls.grade_level}. sınıf · ${cls.school_name ?? "Okul belirtilmedi"}`}
         back={{ href: "/siniflar", label: "Sınıflar" }}
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => setStudentExcelOpen(true)}>
+              <Users className="h-4 w-4" /> Excel öğrenci
+            </Button>
             <Button variant="secondary" onClick={() => setExcelOpen(true)}>
               <FileSpreadsheet className="h-4 w-4" /> Excel deneme
             </Button>
@@ -58,8 +63,15 @@ export default function ClassDetailPage() {
         <EmptyState
           icon={Users}
           title="Bu sınıfta öğrenci yok"
-          description="İlk öğrenciyi ekle ve haftalık takibe başla."
-          action={<Button onClick={() => setModalOpen(true)}>Öğrenci ekle</Button>}
+          description="Tek tek ekle ya da Excel ile tüm sınıfı bir kerede yükle."
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button variant="secondary" onClick={() => setStudentExcelOpen(true)}>
+                <Users className="h-4 w-4" /> Excel ile yükle
+              </Button>
+              <Button onClick={() => setModalOpen(true)}>Öğrenci ekle</Button>
+            </div>
+          }
         />
       ) : (
         <StaggerList className="grid gap-2.5 sm:grid-cols-2">
@@ -95,6 +107,13 @@ export default function ClassDetailPage() {
         onClose={() => setExcelOpen(false)}
         students={students ?? []}
         subjects={subjects ?? []}
+      />
+
+      <StudentImportModal
+        open={studentExcelOpen}
+        onClose={() => setStudentExcelOpen(false)}
+        classId={id}
+        defaultGrade={cls.grade_level}
       />
     </div>
   );
